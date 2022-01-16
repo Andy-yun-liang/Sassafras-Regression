@@ -37,19 +37,19 @@ The dataset consist of over 200,000 randomly simulated observations with 75 cova
 ## Data Preprocessing
 I started off my data preprocessing phase by changing the columns with the “?” strings into a missing value. Next, I applied a simple mean fill for the missing values as imputation methods such as K nearest neighbours are too memory-heavy for the given dataset even with the free computing power provided . Next, I removed features that were under an arbitrary variance threshold because low variance features don’t contribute a lot to a model’s predictive ability. I started off with a threshold of 0 and ended up choosing a threshold of 0.05 for my final training and testing dataset as it resulted in better RMSE overall when comparing the models. After removing the low variance features, I decided to remove features with a correlation of the absolute value of 0.8 to reduce the training time. A justification for this choice is that linear-based methods will improve. Finally, I scaled the data with the standard scaler function in case I decide to use algorithms that are magnitude dependent. 
 
-# Chaning ? to NaNs
+### Chaning ? to NaNs
 ```python
 trainX["#B17"] = trainX["#B17"].replace("?",np.nan).astype('float64') 
 testX["#B17"] = testX["#B17"].replace("?",np.nan).astype('float64') 
 ```
 
-# Mean Fill
+### Mean Fill
 ```python
 trainX = trainX.fillna(trainX.mean())
 testX = testX.fillna(testX.mean())
 ```
 
-# Removing Low Variance Features
+### Removing Low Variance Features
 ```python
 from sklearn.feature_selection import VarianceThreshold
 the_threshold = VarianceThreshold(threshold=0.05)
@@ -60,7 +60,7 @@ testX.drop(to_be_remove,axis=1,inplace=True)
 trainX.drop(to_be_remove,axis=1,inplace=True)
 ```
 
-# Removing Highly Correlated Features
+### Removing Highly Correlated Features
 ```python
 corr = trainX.corr()
 corr.style.background_gradient(cmap='coolwarm').set_precision(2)
@@ -90,13 +90,13 @@ def the_rmse(model):
     return(rmse)
 ```
 
-# Linear model
+### Linear model
 ```python
 ls=LinearRegression()
 the_rmse(ls).mean()
 ```
 
-# Lasso model
+### Lasso model
 ```python
 lasso_alpha = [0.001, 0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6]
 lasso_rmse = []
@@ -110,7 +110,7 @@ display(lasso_rmse_results.transpose())
 
 ```
 
-# Ridge model
+### Ridge model
 ```python
 ridge_alpha = list(range(1,16))
 ridge_rmse = []
@@ -122,7 +122,7 @@ ridge_rmse_results = pd.DataFrame(ridge_rmse,ridge_alpha,columns=['RMSE'])
 display(ridge_rmse_results.transpose())
 ```
 
-# ElasticNet 
+### ElasticNet 
 ```python
 enet_alpha = [0.001,0.01,0.1,0.25,0.5,0.75,1]
 enet_ratio = [0.001,0.01,0.03,0.05,0.1,0.15,0.25,0.4]
@@ -134,7 +134,7 @@ for a in enet_alpha:
         enet_rmse.append(the_rmse(enet).mean())
 ```
 
-# Regression Tree
+### Regression Tree
 ```python
 param_grid = {'max_depth' : [4,5,6,7,8,9,10,15] ,
               'max_features' : [4,5,6,7,8,9,10,15]
@@ -144,7 +144,7 @@ tree_grid = GridSearchCV(tree_mod, param_grid, cv=10, refit=True, verbose=1, sco
 tree_grid.fit(trainX,trainY_final)
 ```
 
-# Random Forest
+### Random Forest
 ```python
 rf_params = {
  'max_features':[5,10,15,20,25,35,40,45]
@@ -154,7 +154,7 @@ rf_grid = GridSearchCV(RandomForestRegressor(random_state=12), rf_params,refit=T
 rf_grid.fit(trainX,trainY_final)
 ```
 
-# Gradient Boosting Machine
+### Gradient Boosting Machine
 ```Python
 gbm_params ={'learning_rate' : [0.05, 0.1, 0.3, 0.5, 0.6, 0.75, 0.9, 1.1, 1.2],
             'n_estimators' : [800, 1200, 1500],
@@ -166,7 +166,7 @@ gbm_mod.fit(trainX,trainY_final)
 
 ```
 
-# Extreme Gradient Boost
+### Extreme Gradient Boost
 ```python
 xgb_params = {'n_estimators' : [500, 700, 1000],
               'max_depth' : [3, 4, 5, 7],
@@ -178,7 +178,7 @@ xgb_mod = GridSearchCV(XGBRegressor(metric="rmse"), xgb_params, scoring = 'neg_m
 xgb_mod.fit(trainX, trainY_final)
 ```
 
-# Light Gradient Boost
+### Light Gradient Boost
 ```python
 lgbm_params = {'n_estimators' : [500, 700],
                'max_depth' : [3, 5, 7, 9],
@@ -189,20 +189,20 @@ lgbm_params = {'n_estimators' : [500, 700],
 lgbm_mod = GridSearchCV(LGBMRegressor(objective = 'regression', metric = 'rmse'), lgbm_params, scoring = 'neg_mean_squared_error',verbose=1, cv = 10)
 lgbm_mod.fit(trainX,trainY_final)
 ```
-# Average Ensemble
+### Average Ensemble
 ```python
 the_weights = [1/3, 1/3, 1/3]
 preds['prediction'] = (predictions_data[0]*the_weights[0]) + (predictions_data[1]*the_weights[1]) + (predictions_data[2]*the_weights[2])
 ```
 
-# Weighted Average Ensemble 
+### Weighted Average Ensemble 
 With more weight distributed to XGBoost as it's a better stand alone regressor compared to GBM and LGBM.
 ```python
 weighted_weights = [0.6,0.2,0.2]
 preds['prediction'] = (predictions_data[0]*weighted_weights[0]) + (predictions_data[1]*weighted_weights[1]) + (predictions_data[2]*weighted_weights[2])
 ```
 
-# Random Forest Stack
+### Random Forest Stack
 ```python
 random_forest_mod = RandomForestRegressor(max_depth = 45,bootstrap=True)
 the_regressors = StackingRegressor(regressors = [xgb_final_mod,lgbm_final_mod,gbm_mod], meta_regressor = random_forest_mod)
@@ -210,7 +210,7 @@ the_regressors.fit(trainX3,trainY_final)
 stacked_preds = the_regressors.predict(testX3)
 ```
 
-# Linear Stack
+### Linear Stack
 ```python
 lm_mod = LinearRegression()
 the_regressors2 = StackingRegressor(regressors = [xgb_final_mod,lgbm_final_mod,gbm_mod], meta_regressor = lm_mod)
