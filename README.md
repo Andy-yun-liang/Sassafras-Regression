@@ -35,8 +35,49 @@ The dataset consist of over 200,000 randomly simulated observations with 75 cova
 
 
 ## Data Preprocessing
-I started off my data preprocessing phase by changing the columns with the “?” strings into a missing value. Next, I applied a mean fill for the missing values as imputation methods such as K nearest neighbours are too memory-heavy for the given dataset. Next, I removed features that were under an arbitrary variance threshold because low variance features don’t contribute a lot to a model’s predictive ability. I started off with a threshold of 0 and ended up choosing a threshold of 0.05 for my final training and testing dataset as it resulted in better RMSE overall when comparing the models. After removing the low variance features, I decided to remove features with a correlation of the absolute value of 0.7 to reduce the training time. A justification for this choice is that linear-based methods will improve. Finally, I scaled the data with the standard scaler function in case I decide to use algorithms that are magnitude dependent. 
+I started off my data preprocessing phase by changing the columns with the “?” strings into a missing value. Next, I applied a simple mean fill for the missing values as imputation methods such as K nearest neighbours are too memory-heavy for the given dataset even with the free computing power provided . Next, I removed features that were under an arbitrary variance threshold because low variance features don’t contribute a lot to a model’s predictive ability. I started off with a threshold of 0 and ended up choosing a threshold of 0.05 for my final training and testing dataset as it resulted in better RMSE overall when comparing the models. After removing the low variance features, I decided to remove features with a correlation of the absolute value of 0.8 to reduce the training time. A justification for this choice is that linear-based methods will improve. Finally, I scaled the data with the standard scaler function in case I decide to use algorithms that are magnitude dependent. 
 
+# Chaning ? to NaNs
+```python
+trainX["#B17"] = trainX["#B17"].replace("?",np.nan).astype('float64') 
+testX["#B17"] = testX["#B17"].replace("?",np.nan).astype('float64') 
+```
+
+# Mean Fill
+```python
+trainX = trainX.fillna(trainX.mean())
+testX = testX.fillna(testX.mean())
+```
+
+# Removing Low Variance Features
+```python
+from sklearn.feature_selection import VarianceThreshold
+the_threshold = VarianceThreshold(threshold=0.05)
+the_threshold.fit(trainX)
+to_be_remove = [i for i in testX.columns
+               if i not in testX.columns[the_threshold.get_support()]]
+testX.drop(to_be_remove,axis=1,inplace=True)
+trainX.drop(to_be_remove,axis=1,inplace=True)
+```
+
+# Removing Highly Correlated Features
+```python
+corr = trainX.corr()
+corr.style.background_gradient(cmap='coolwarm').set_precision(2)
+#from sklearn feature selection documentation
+def correlation(dataset, threshold):
+    col_corr = set()  
+    corr_matrix = dataset.corr()
+    for i in range(len(corr_matrix.columns)):
+        for j in range(i):
+            if abs(corr_matrix.iloc[i, j]) > threshold:
+                colname = corr_matrix.columns[i]  
+                col_corr.add(colname)
+    return col_corr
+corr_ft = correlation(trainX, 0.8)
+trainX.drop(corr_ft,axis=1,inplace=True)
+testX.drop(corr_ft,axis=1,inplace=True)
+```
 
 ## Model Tuning
 For the Model Tuning process, I decided to use the scikit-learn library with gridsearchcv and randomsearchcv as it's the most extensive library for machine learning in Python asides from Tensorflow and Pytorch.
@@ -175,7 +216,5 @@ lm_mod = LinearRegression()
 the_regressors2 = StackingRegressor(regressors = [xgb_final_mod,lgbm_final_mod,gbm_mod], meta_regressor = lm_mod)
 the_regressors2.fit(trainX3,trainY_final)
 stacked_preds2 = the_regressors2.predict(testX3)
-preds['prediction'] =stacked_preds2
 
 ```
-
