@@ -37,7 +37,7 @@ The dataset consist of over 200,000 randomly simulated observations with 75 cova
 ## Data Preprocessing
 I started off my data preprocessing phase by changing the columns with the “?” strings into a missing value. Next, I applied a simple mean fill for the missing values as imputation methods such as K nearest neighbours are too memory-heavy for the given dataset even with the free computing power provided . Next, I removed features that were under an arbitrary variance threshold because low variance features don’t contribute a lot to a model’s predictive ability. I started off with a threshold of 0 and ended up choosing a threshold of 0.05 for my final training and testing dataset as it resulted in better RMSE overall when comparing the models. After removing the low variance features, I decided to remove features with a correlation of the absolute value of 0.8 to reduce the training time. A justification for this choice is that linear-based methods will improve. Finally, I scaled the data with the standard scaler function in case I decide to use algorithms that are magnitude dependent. 
 
-### Chaning ? to NaNs
+### Changing ? to NaNs
 ```python
 trainX["#B17"] = trainX["#B17"].replace("?",np.nan).astype('float64') 
 testX["#B17"] = testX["#B17"].replace("?",np.nan).astype('float64') 
